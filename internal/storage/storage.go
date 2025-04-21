@@ -32,7 +32,7 @@ func (s *UrlStorage) GetURL(uid string) (string, error) {
 	return e, nil
 }
 
-func MakeNewEntry(s Storage, uid string, url string) {
+func MakeEntry(s Storage, uid string, url string) {
 	s.InsertURL(uid, url)
 }
 

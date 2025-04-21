@@ -23,7 +23,7 @@ func generateShortURL(urlList *storage.UrlStorage, longURL string) string {
 	//[:11] здесь сокращаю строку
 	id := reg.ReplaceAllString(string(runes[:11]), "")
 
-	storage.MakeNewEntry(urlList, id, longURL)
+	storage.MakeEntry(urlList, id, longURL)
 	return "/" + id
 }
 
