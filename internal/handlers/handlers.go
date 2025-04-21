@@ -24,6 +24,7 @@ func generateShortURL(urlList *storage.UrlStorage, longURL string) string {
 	id := reg.ReplaceAllString(string(runes[:11]), "")
 
 	storage.MakeEntry(urlList, id, longURL)
+
 	return "/" + id
 }
 
