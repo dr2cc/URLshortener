@@ -1,135 +1,107 @@
 package handlers
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/dr2cc/URLshortener.git/internal/storage"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
 )
 
+func setupRouter(ts *storage.UrlStorage) *gin.Engine {
+	gin.SetMode(gin.TestMode)
+	router := gin.Default()
+	router.POST("/", PostHandler(ts))
+	router.GET("/:id", GetHandler(ts))
+	return router
+}
+
 func TestPostHandler(t *testing.T) {
-	storage := storage.NewStorage()
-	handler := PostHandler(storage)
+	store := storage.NewStorage()
+	router := setupRouter(store)
 
-	tests := []struct {
-		name        string
-		method      string
-		contentType string
-		body        string
-		wantStatus  int
-	}{
-		{
-			name:        "Valid POST",
-			method:      http.MethodPost,
-			contentType: "text/plain",
-			body:        "https://example.com",
-			wantStatus:  http.StatusCreated,
-		},
-		{
-			name:        "Invalid content type",
-			method:      http.MethodPost,
-			contentType: "application/json",
-			body:        "https://example.com",
-			wantStatus:  http.StatusBadRequest,
-		},
-		{
-			name:        "Invalid method",
-			method:      http.MethodGet,
-			contentType: "text/plain",
-			body:        "https://example.com",
-			wantStatus:  http.StatusBadRequest,
-		},
-	}
+	t.Run("Successful URL shortening", func(t *testing.T) {
+		body := bytes.NewBufferString("https://example.com")
+		req, _ := http.NewRequest("POST", "/", body)
+		req.Header.Set("Content-Type", "text/plain")
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(tt.method, "/", strings.NewReader(tt.body))
-			req.Header.Set("Content-Type", tt.contentType)
-			w := httptest.NewRecorder()
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
 
-			handler(w, req)
+		assert.Equal(t, http.StatusCreated, w.Code)
+		assert.Contains(t, w.Body.String(), "/")
+	})
 
-			resp := w.Result()
-			if resp.StatusCode != tt.wantStatus {
-				t.Errorf("Expected status %d, got %d", tt.wantStatus, resp.StatusCode)
-			}
-		})
-	}
+	t.Run("Invalid content type", func(t *testing.T) {
+		body := bytes.NewBufferString("https://example.com")
+		req, _ := http.NewRequest("POST", "/", body)
+		req.Header.Set("Content-Type", "application/json")
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		assert.Contains(t, w.Body.String(), "Content-Type isn't text/plain")
+	})
+
+	t.Run("Wrong HTTP method", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/", nil)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
 }
 
 func TestGetHandler(t *testing.T) {
-	storage := storage.NewStorage()
-	handler := GetHandler(storage)
+	store := storage.NewStorage()
+	store.InsertURL("abc123", "https://example.com")
+	router := setupRouter(store)
 
-	// Setup test data
-	testID := "test123"
-	testURL := "https://example.com"
-	storage.InsertURL(testID, testURL)
+	t.Run("Successful redirect", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/abc123", nil)
 
-	tests := []struct {
-		name         string
-		method       string
-		path         string
-		wantStatus   int
-		wantLocation string
-	}{
-		{
-			name:         "Valid GET",
-			method:       http.MethodGet,
-			path:         "/" + testID,
-			wantStatus:   http.StatusTemporaryRedirect,
-			wantLocation: testURL,
-		},
-		{
-			name:         "Non-existent ID",
-			method:       http.MethodGet,
-			path:         "/nonexistent",
-			wantStatus:   http.StatusBadRequest,
-			wantLocation: "URL with such id doesn't exist",
-		},
-		{
-			name:         "Invalid method",
-			method:       http.MethodPost,
-			path:         "/" + testID,
-			wantStatus:   http.StatusBadRequest,
-			wantLocation: "Method not allowed",
-		},
-	}
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			req := httptest.NewRequest(tt.method, tt.path, nil)
-			w := httptest.NewRecorder()
+		assert.Equal(t, http.StatusTemporaryRedirect, w.Code)
+		assert.Equal(t, "https://example.com", w.Header().Get("Location"))
+	})
 
-			handler(w, req)
+	t.Run("Non-existent URL", func(t *testing.T) {
+		req, _ := http.NewRequest("GET", "/nonexistent", nil)
 
-			resp := w.Result()
-			if resp.StatusCode != tt.wantStatus {
-				t.Errorf("Expected status %d, got %d", tt.wantStatus, resp.StatusCode)
-			}
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
 
-			location := resp.Header.Get("Location")
-			if location != tt.wantLocation {
-				t.Errorf("Expected Location %s, got %s", tt.wantLocation, location)
-			}
-		})
-	}
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+	})
+
+	t.Run("Wrong HTTP method", func(t *testing.T) {
+		req, _ := http.NewRequest("POST", "/abc123", nil)
+
+		w := httptest.NewRecorder()
+		router.ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+	})
 }
 
 func TestGenerateShortURL(t *testing.T) {
-	storage := storage.NewStorage()
-	url := "https://example.com/very/long/url"
+	store := storage.NewStorage()
+	longURL := "https://example.com/very/long/url"
 
-	short := generateShortURL(storage, url)
-	if len(short) < 2 {
-		t.Errorf("Generated URL is too short: %s", short)
-	}
+	shortURL := generateShortURL(store, longURL)
+	assert.NotEmpty(t, shortURL)
+	assert.True(t, len(shortURL) > 1) // At least "/" + one character
 
 	// Verify the URL was stored
-	id := strings.TrimPrefix(short, "/")
-	if _, err := storage.GetURL(id); err != nil {
-		t.Errorf("URL was not stored in storage: %v", err)
-	}
+	id := shortURL[1:] // Remove leading "/"
+	url, err := store.GetURL(id)
+	assert.NoError(t, err)
+	assert.Equal(t, longURL, url)
 }

@@ -1,19 +1,18 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/dr2cc/URLshortener.git/internal/handlers"
-	"github.com/dr2cc/URLshortener.git/internal/server"
 	"github.com/dr2cc/URLshortener.git/internal/storage"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	storageInstance := storage.NewStorage()
 
-	postHandler := handlers.PostHandler(storageInstance)
-	getHandler := handlers.GetHandler(storageInstance)
+	router := gin.Default()
 
-	server := server.NewServer(postHandler, getHandler)
-	http.ListenAndServe("localhost:8080", server)
+	router.POST("/", handlers.PostHandler(storageInstance))
+	router.GET("/:id", handlers.GetHandler(storageInstance))
+
+	router.Run("localhost:8080")
 }

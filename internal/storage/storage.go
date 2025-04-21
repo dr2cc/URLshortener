@@ -27,7 +27,7 @@ func (s *UrlStorage) InsertURL(uid string, url string) error {
 func (s *UrlStorage) GetURL(uid string) (string, error) {
 	e, exists := s.Data[uid]
 	if !exists {
-		return uid, errors.New("URL with such id doesn't exist")
+		return "", errors.New("URL with such id doesn't exist")
 	}
 	return e, nil
 }
