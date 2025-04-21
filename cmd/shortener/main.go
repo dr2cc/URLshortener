@@ -43,27 +43,36 @@ func (s *UrlStorage) GetURL(uid string) (string, error) {
 	return e, nil
 }
 
-// Реализую интерфейс Storage - создаю запись в передаваемом сюда объекте
-func MakeNewEntry(s Storage, uid string, url string) {
+//*******************************************************************
+// Реализую интерфейс Storage
+
+func MakeEntry(s Storage, uid string, url string) {
 	s.InsertURL(uid, url)
 }
 
-func generateShortURL(urlList *UrlStorage, s string) string {
+func GetEntry(s Storage, uid string) (string, error) {
+	e, err := s.GetURL(uid)
+	return e, err
+}
+
+//********************************************************************
+
+func generateShortURL(urlList *UrlStorage, longURL string) string {
 	rand.Seed(time.Now().UnixNano()) // Инициализация генератора случайных чисел
-	runes := []rune(s)
+	runes := []rune(longURL)
 	rand.Shuffle(len(runes), func(i, j int) {
 		runes[i], runes[j] = runes[j], runes[i]
 	})
 	//удаляю из полученной строки все кроме букв и цифр
 	reg := regexp.MustCompile(`[^a-zA-Zа-яА-Я0-9]`)
-	//[:11] здесь мы еще сокращаем строку
-	uid := reg.ReplaceAllString(string(runes[:11]), "")
+	//[:11] здесь сокращаю строку
+	id := reg.ReplaceAllString(string(runes[:11]), "")
 
-	//Реализуем интерфейс Storage, что в последующем даст возможность
+	//Реализую интерфейс Storage, что в последующем даст возможность
 	//использовать его методы и другим типам
-	MakeNewEntry(urlList, uid, s)
+	MakeEntry(urlList, id, longURL)
 
-	return "/" + uid
+	return "/" + id
 }
 
 // тип urlStorage и его метод PostHandler
@@ -72,19 +81,18 @@ func (ts *UrlStorage) PostHandler(w http.ResponseWriter, req *http.Request) {
 	case http.MethodPost:
 		switch req.Header.Get("Content-Type") {
 		case "text/plain":
+			//param - тело запроса (тип []byte)
 			param, err := io.ReadAll(req.Body)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusBadRequest)
 				return
 			}
 
-			// Преобразуем тело запроса (тип []byte) в строку:
-			longURL := string(param)
-			// Генерируем сокращённый URL и создаем запись в нашем хранилище
-			shortURL := req.Host + generateShortURL(ts, longURL)
+			// Генерирую ответ и создаю запись в хранилище
+			response := req.Host + generateShortURL(ts, string(param))
 
 			w.WriteHeader(http.StatusCreated)
-			fmt.Fprint(w, shortURL)
+			fmt.Fprint(w, response)
 		default:
 			w.WriteHeader(http.StatusBadRequest)
 			fmt.Fprint(w, "Content-Type isn`t text/plain")
@@ -93,12 +101,6 @@ func (ts *UrlStorage) PostHandler(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(w, "Method not allowed")
 	}
-}
-
-// Реализую интерфейс Storage - получаю запись из объекта хранилища
-func GetEntry(s Storage, uid string) (string, error) {
-	e, err := s.GetURL(uid)
-	return e, err
 }
 
 // тип urlStorage и его метод GetHandler
@@ -110,14 +112,15 @@ func (ts *UrlStorage) GetHandler(w http.ResponseWriter, req *http.Request) {
 		// id := req.PathValue("id")
 
 		// А вот RequestURI получается и от клиента и из теста
-		// Но получаем лишний "/"
+		// Но получаю лишний "/"
 		id := strings.TrimPrefix(req.RequestURI, "/")
 
 		// //Так не реализуя интерфейс
 		//longURL, err := ts.GetURL(id)
 
-		//Так реализуя интерфейс
+		//Реализую интерфейс
 		longURL, err := GetEntry(ts, id)
+
 		if err != nil {
 			//http.Error(w, "URL not found", http.StatusBadRequest)
 			w.Header().Set("Location", err.Error())
@@ -135,18 +138,19 @@ func (ts *UrlStorage) GetHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-// *********************************************************************************
+// ******************************************************************************
 // Секция переопредения стандартного ServeMux маршрутизатором CustomMux,
 // Цель- возвращать 400 вместо 405
+
 type CustomMux struct {
 	*http.ServeMux
 }
 
 func (m *CustomMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	// Проверяем, есть ли такой путь
+	// Проверяю наличие пути
 	_, pattern := m.Handler(r)
 	if pattern == "" {
-		// // Если эндпоинта нет вообще — 404
+		// // Если эндпоинта нет вообще то стандарт- 404
 		// http.NotFound(w, r)
 
 		// Но мне нужно 400
@@ -154,19 +158,19 @@ func (m *CustomMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Если эндпоинт есть, но метод не совпадает — 400
+	// Если эндпоинт есть, но метод не совпадает- 400
 	if !m.isMethodAllowed(r) {
 		http.Error(w, "Bad Request", http.StatusBadRequest)
 		return
 	}
 
-	// Иначе передаем обработку стандартному ServeMux
+	// Иначе передаю обработку стандартному ServeMux
 	m.ServeMux.ServeHTTP(w, r)
 }
 
 // isMethodAllowed проверяет, разрешен ли метод для данного пути
 func (m *CustomMux) isMethodAllowed(r *http.Request) bool {
-	// Получаем зарегистрированный обработчик для этого пути
+	// Получаю зарегистрированный обработчик для этого пути
 	handler, _ := m.Handler(r)
 
 	// Если обработчик — это ServeMux (значит, метод не совпадает)
@@ -179,7 +183,7 @@ func (m *CustomMux) isMethodAllowed(r *http.Request) bool {
 func main() {
 	// mux := http.NewServeMux()
 
-	//Для создания ответ 400 на все не верные запросы
+	//Для создания ответа 400 на все не верные запросы
 	//создаю кастомный ServeMux (маршрутизатор)
 	mux := &CustomMux{http.NewServeMux()}
 
