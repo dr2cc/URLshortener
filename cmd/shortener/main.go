@@ -2,21 +2,18 @@ package main
 
 import (
 	"net/http"
+
+	"github.com/dr2cc/URLshortener.git/internal/handlers"
+	"github.com/dr2cc/URLshortener.git/internal/server"
+	"github.com/dr2cc/URLshortener.git/internal/storage"
 )
 
 func main() {
-	// mux := http.NewServeMux()
+	storageInstance := storage.NewStorage()
 
-	//Для создания ответа 400 на все не верные запросы
-	//создаю кастомный ServeMux (маршрутизатор)
-	mux := &CustomMux{http.NewServeMux()}
+	postHandler := handlers.PostHandler(storageInstance)
+	getHandler := handlers.GetHandler(storageInstance)
 
-	//создаю объект типа UrlStorage
-	storage := NewStorageStruct()
-
-	//обращаюсь к методам UrlStorage
-	mux.HandleFunc("POST /{$}", storage.PostHandler)
-	mux.HandleFunc("GET /{id}", storage.GetHandler)
-
-	http.ListenAndServe("localhost:8080", mux)
+	server := server.NewServer(postHandler, getHandler)
+	http.ListenAndServe("localhost:8080", server)
 }
