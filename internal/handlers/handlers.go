@@ -11,9 +11,11 @@ import (
 )
 
 func generateShortURL(urlList *storage.UrlStorage, longURL string) string {
-	rand.Seed(time.Now().UnixNano())
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	runes := []rune(longURL)
-	rand.Shuffle(len(runes), func(i, j int) {
+	r.Shuffle(len(runes), func(i, j int) {
 		runes[i], runes[j] = runes[j], runes[i]
 	})
 
