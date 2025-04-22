@@ -65,3 +65,45 @@ func GetHandler(ts *storage.UrlStorage) gin.HandlerFunc {
 		c.Redirect(307, longURL)
 	}
 }
+
+// middleware проверки методов
+func MethodChecker() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Получаем список разрешенных методов для текущего пути
+		allowedMethods := getAllowedMethods(c)
+
+		// Проверяем, разрешен ли текущий метод
+		valid := false
+		for _, method := range allowedMethods {
+			if method == c.Request.Method {
+				valid = true
+				break
+			}
+		}
+
+		if !valid {
+			c.AbortWithStatusJSON(400, gin.H{
+				"error": "Bad Request - invalid method",
+			})
+			return
+		}
+
+		c.Next()
+	}
+}
+
+// getAllowedMethods возвращает разрешенные методы для текущего пути
+func getAllowedMethods(c *gin.Context) []string {
+	// В Gin нет прямого способа получить разрешенные методы,
+	// поэтому мы используем обходной путь - проверяем путь вручную
+	path := c.FullPath()
+
+	switch path {
+	case "/":
+		return []string{"POST"}
+	case "/:id":
+		return []string{"GET"}
+	default:
+		return []string{}
+	}
+}

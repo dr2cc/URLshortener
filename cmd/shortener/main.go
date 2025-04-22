@@ -7,12 +7,20 @@ import (
 )
 
 func main() {
+
 	storageInstance := storage.NewStorage()
+	postHandler := handlers.PostHandler(storageInstance)
+	getHandler := handlers.GetHandler(storageInstance)
 
 	router := gin.Default()
 
-	router.POST("/", handlers.PostHandler(storageInstance))
-	router.GET("/:id", handlers.GetHandler(storageInstance))
+	// Добавляем middleware проверки методов
+	// Сервер должен возвращать только 400, на все не корректные запросы
+	router.Use(handlers.MethodChecker())
+
+	// Явно регистрируем только разрешенные методы
+	router.Handle("POST", "/", postHandler)
+	router.Handle("GET", "/:id", getHandler)
 
 	router.Run("localhost:8080")
 }
