@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func setupRouter(ts *storage.UrlStorage) *gin.Engine {
+func setupRouter(ts *storage.URLStorage) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	router := gin.Default()
 	router.POST("/", PostHandler(ts))

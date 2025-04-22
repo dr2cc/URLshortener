@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func generateShortURL(urlList *storage.UrlStorage, longURL string) string {
+func generateShortURL(urlList *storage.URLStorage, longURL string) string {
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -27,7 +27,7 @@ func generateShortURL(urlList *storage.UrlStorage, longURL string) string {
 	return "/" + id
 }
 
-func PostHandler(ts *storage.UrlStorage) gin.HandlerFunc {
+func PostHandler(ts *storage.URLStorage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Method != "POST" {
 			c.AbortWithStatusJSON(400, gin.H{"error": "Method not allowed"})
@@ -50,7 +50,7 @@ func PostHandler(ts *storage.UrlStorage) gin.HandlerFunc {
 	}
 }
 
-func GetHandler(ts *storage.UrlStorage) gin.HandlerFunc {
+func GetHandler(ts *storage.URLStorage) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if c.Request.Method != "GET" {
 			c.AbortWithStatusJSON(400, gin.H{"error": "Method not allowed"})
