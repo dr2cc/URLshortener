@@ -15,5 +15,5 @@ func main() {
 	getHandler := handlers.GetHandler(storageInstance)
 
 	server := server.NewServer(postHandler, getHandler)
-	http.ListenAndServe("localhost:8080", server)
+	http.ListenAndServe(":8080", server)
 }
