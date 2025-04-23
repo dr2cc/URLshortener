@@ -9,22 +9,22 @@ type Storage interface {
 	GetURL(uid string) (string, error)
 }
 
-type UrlStorage struct {
+type URLStorage struct {
 	Data map[string]string
 }
 
-func NewStorage() *UrlStorage {
-	return &UrlStorage{
+func NewStorage() *URLStorage {
+	return &URLStorage{
 		Data: make(map[string]string),
 	}
 }
 
-func (s *UrlStorage) InsertURL(uid string, url string) error {
+func (s *URLStorage) InsertURL(uid string, url string) error {
 	s.Data[uid] = url
 	return nil
 }
 
-func (s *UrlStorage) GetURL(uid string) (string, error) {
+func (s *URLStorage) GetURL(uid string) (string, error) {
 	e, exists := s.Data[uid]
 	if !exists {
 		return uid, errors.New("URL with such id doesn't exist")

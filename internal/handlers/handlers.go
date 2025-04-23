@@ -12,7 +12,7 @@ import (
 	"github.com/dr2cc/URLshortener.git/internal/storage"
 )
 
-func generateShortURL(urlList *storage.UrlStorage, longURL string) string {
+func generateShortURL(urlList *storage.URLStorage, longURL string) string {
 
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
@@ -30,7 +30,7 @@ func generateShortURL(urlList *storage.UrlStorage, longURL string) string {
 	return "/" + id
 }
 
-func PostHandler(ts *storage.UrlStorage) http.HandlerFunc {
+func PostHandler(ts *storage.URLStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodPost:
@@ -59,7 +59,7 @@ func PostHandler(ts *storage.UrlStorage) http.HandlerFunc {
 	}
 }
 
-func GetHandler(ts *storage.UrlStorage) http.HandlerFunc {
+func GetHandler(ts *storage.URLStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodGet:
