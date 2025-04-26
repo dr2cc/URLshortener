@@ -77,21 +77,21 @@ func PostHandler(ts *storage.URLStorage) http.HandlerFunc {
 
 func GetHandler(ts *storage.URLStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		switch req.Method {
-		case http.MethodGet:
-			id := strings.TrimPrefix(req.RequestURI, "/")
-			longURL, err := storage.GetEntry(ts, id)
-			if err != nil {
-				w.Header().Set("Location", err.Error())
-				w.WriteHeader(http.StatusBadRequest)
-				return
-			}
-
-			w.Header().Set("Location", longURL)
-			w.WriteHeader(http.StatusTemporaryRedirect)
-		default:
-			w.Header().Set("Location", "Method not allowed")
+		// switch req.Method {
+		// case http.MethodGet:
+		id := strings.TrimPrefix(req.RequestURI, "/")
+		longURL, err := storage.GetEntry(ts, id)
+		if err != nil {
+			w.Header().Set("Location", err.Error())
 			w.WriteHeader(http.StatusBadRequest)
+			return
 		}
+
+		w.Header().Set("Location", longURL)
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		// default:
+		// 	w.Header().Set("Location", "Method not allowed")
+		// 	w.WriteHeader(http.StatusBadRequest)
+		// }
 	}
 }
