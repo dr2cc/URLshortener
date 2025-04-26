@@ -12,10 +12,12 @@ import (
 	"github.com/dr2cc/URLshortener.git/internal/storage"
 )
 
-func generateShortURL(urlList *storage.UrlStorage, longURL string) string {
-	rand.Seed(time.Now().UnixNano())
+func generateShortURL(urlList *storage.URLStorage, longURL string) string {
+
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
 	runes := []rune(longURL)
-	rand.Shuffle(len(runes), func(i, j int) {
+	r.Shuffle(len(runes), func(i, j int) {
 		runes[i], runes[j] = runes[j], runes[i]
 	})
 
