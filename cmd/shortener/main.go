@@ -4,16 +4,15 @@ import (
 	"net/http"
 
 	"github.com/dr2cc/URLshortener.git/internal/handlers"
-	"github.com/dr2cc/URLshortener.git/internal/server"
 	"github.com/dr2cc/URLshortener.git/internal/storage"
 )
 
 func main() {
+	mux := http.NewServeMux()
 	storageInstance := storage.NewStorage()
 
-	postHandler := handlers.PostHandler(storageInstance)
-	getHandler := handlers.GetHandler(storageInstance)
+	mux.HandleFunc("POST /{$}", handlers.PostHandler(storageInstance))
+	mux.HandleFunc("GET /{id}", handlers.GetHandler(storageInstance))
 
-	server := server.NewServer(postHandler, getHandler)
-	http.ListenAndServe(":8080", server)
+	http.ListenAndServe(":8080", mux)
 }

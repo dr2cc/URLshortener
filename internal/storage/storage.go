@@ -32,6 +32,7 @@ func (s *URLStorage) GetURL(uid string) (string, error) {
 	return e, nil
 }
 
+// Реализую интерфейс Storage
 func MakeEntry(s Storage, uid string, url string) {
 	s.InsertURL(uid, url)
 }
