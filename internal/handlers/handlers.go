@@ -32,30 +32,46 @@ func generateShortURL(urlList *storage.URLStorage, longURL string) string {
 
 func PostHandler(ts *storage.URLStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		switch req.Method {
-		case http.MethodPost:
-			switch req.Header.Get("Content-Type") {
-			case "text/plain":
-				//param - тело запроса (тип []byte)
-				param, err := io.ReadAll(req.Body)
-				if err != nil {
-					http.Error(w, err.Error(), http.StatusBadRequest)
-					return
-				}
+		// 	switch req.Method {
+		// 	case http.MethodPost:
+		// 		switch req.Header.Get("Content-Type") {
+		// 		case "text/plain":
+		// 			//param - тело запроса (тип []byte)
+		// 			param, err := io.ReadAll(req.Body)
+		// 			if err != nil {
+		// 				http.Error(w, err.Error(), http.StatusBadRequest)
+		// 				return
+		// 			}
 
-				//longURL := string(param)
-				response := req.Host + generateShortURL(ts, string(param))
+		// 			//longURL := string(param)
+		// 			response := req.Host + generateShortURL(ts, string(param))
 
-				w.WriteHeader(http.StatusCreated)
-				fmt.Fprint(w, response)
-			default:
-				w.WriteHeader(http.StatusBadRequest)
-				fmt.Fprint(w, "Content-Type isn't text/plain")
-			}
-		default:
-			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, "Method not allowed")
+		// 			w.WriteHeader(http.StatusCreated)
+		// 			fmt.Fprint(w, response)
+		// 		default:
+		// 			w.WriteHeader(http.StatusBadRequest)
+		// 			fmt.Fprint(w, "Content-Type isn't text/plain")
+		// 		}
+		// 	default:
+		// 		w.WriteHeader(http.StatusBadRequest)
+		// 		fmt.Fprint(w, "Method not allowed")
+		// 	}
+
+		param, err := io.ReadAll(req.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
 		}
+
+		// Преобразуем тело запроса (тип []byte) в строку:
+		longURL := string(param)
+		// Генерируем сокращённый URL и создаем запись в нашем хранилище
+		shortURL := req.Host + generateShortURL(ts, longURL)
+
+		// Устанавливаем статус ответа 201
+		w.WriteHeader(http.StatusCreated)
+
+		fmt.Fprint(w, shortURL)
 	}
 }
 
