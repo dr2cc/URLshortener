@@ -30,7 +30,7 @@ func generateShortURL(urlList *storage.URLStorage, longURL string) string {
 	return "/" + id
 }
 
-func PostHandler(ts *storage.UrlStorage) http.HandlerFunc {
+func PostHandler(ts *storage.URLStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodPost:
@@ -59,7 +59,7 @@ func PostHandler(ts *storage.UrlStorage) http.HandlerFunc {
 	}
 }
 
-func GetHandler(ts *storage.UrlStorage) http.HandlerFunc {
+func GetHandler(ts *storage.URLStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		switch req.Method {
 		case http.MethodGet:

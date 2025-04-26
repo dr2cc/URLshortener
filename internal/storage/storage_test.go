@@ -4,7 +4,7 @@ import (
 	"testing"
 )
 
-func TestUrlStorage_InsertAndGet(t *testing.T) {
+func TestURLStorage_InsertAndGet(t *testing.T) {
 	s := NewStorage()
 	testURL := "https://example.com"
 	testID := "abc123"

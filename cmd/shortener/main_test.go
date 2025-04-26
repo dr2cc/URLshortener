@@ -14,7 +14,7 @@ import (
 // Integration test
 func Test_main(t *testing.T) {
 	// Подготовка (Setup)
-	// * Создается реальное хранилище (UrlStorage), а не mock.
+	// * Создается реальное хранилище (URLStorage), а не mock.
 	// * Инициализируются обработчики POST и GET, которые используют это хранилище.
 	// * Создается сервер с этими обработчиками.
 	storageInstance := storage.NewStorage()
