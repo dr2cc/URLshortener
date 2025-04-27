@@ -32,31 +32,6 @@ func generateShortURL(urlList *storage.URLStorage, longURL string) string {
 
 func PostHandler(ts *storage.URLStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		// 	switch req.Method {
-		// 	case http.MethodPost:
-		// 		switch req.Header.Get("Content-Type") {
-		// 		case "text/plain":
-		// 			//param - тело запроса (тип []byte)
-		// 			param, err := io.ReadAll(req.Body)
-		// 			if err != nil {
-		// 				http.Error(w, err.Error(), http.StatusBadRequest)
-		// 				return
-		// 			}
-
-		// 			//longURL := string(param)
-		// 			response := req.Host + generateShortURL(ts, string(param))
-
-		// 			w.WriteHeader(http.StatusCreated)
-		// 			fmt.Fprint(w, response)
-		// 		default:
-		// 			w.WriteHeader(http.StatusBadRequest)
-		// 			fmt.Fprint(w, "Content-Type isn't text/plain")
-		// 		}
-		// 	default:
-		// 		w.WriteHeader(http.StatusBadRequest)
-		// 		fmt.Fprint(w, "Method not allowed")
-		// 	}
-
 		param, err := io.ReadAll(req.Body)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -70,15 +45,12 @@ func PostHandler(ts *storage.URLStorage) http.HandlerFunc {
 
 		// Устанавливаем статус ответа 201
 		w.WriteHeader(http.StatusCreated)
-
 		fmt.Fprint(w, shortURL)
 	}
 }
 
 func GetHandler(ts *storage.URLStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		// switch req.Method {
-		// case http.MethodGet:
 		id := strings.TrimPrefix(req.RequestURI, "/")
 		longURL, err := storage.GetEntry(ts, id)
 		if err != nil {
@@ -89,9 +61,5 @@ func GetHandler(ts *storage.URLStorage) http.HandlerFunc {
 
 		w.Header().Set("Location", longURL)
 		w.WriteHeader(http.StatusTemporaryRedirect)
-		// default:
-		// 	w.Header().Set("Location", "Method not allowed")
-		// 	w.WriteHeader(http.StatusBadRequest)
-		// }
 	}
 }
