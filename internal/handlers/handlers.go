@@ -66,7 +66,7 @@ func PostHandler(ts *storage.URLStorage) http.HandlerFunc {
 		// Преобразуем тело запроса (тип []byte) в строку:
 		longURL := string(param)
 		// Генерируем сокращённый URL и создаем запись в нашем хранилище
-		shortURL := req.Host + generateShortURL(ts, longURL)
+		shortURL := "http://" + req.Host + generateShortURL(ts, longURL)
 
 		// Устанавливаем статус ответа 201
 		w.WriteHeader(http.StatusCreated)
